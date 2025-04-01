@@ -64,7 +64,6 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             cursor: pointer;
         }
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -91,9 +90,10 @@
             cursor: pointer;
             border: none;
             background: transparent;
+            transition: 0.3s;
         }
-        .mood-buttons button.gray {
-            color: gray;
+        .mood-buttons button.selected {
+            color: #007bff;
         }
         .close {
             float: right;
@@ -106,11 +106,30 @@
             height: 100px;
             margin-top: 10px;
         }
+        .logout-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 2em;
+            background: white;
+            border-radius: 50%;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- Stran za prijavo -->
+<div id="login-page" class="container">
+    <h2>Prijava</h2>
+    <input type="password" id="password" placeholder="Vnesi geslo" />
+    <button onclick="login()">Prijavi se</button>
+</div>
+
+<!-- Glavna stran po prijavi -->
+<div id="main-page" class="container" style="display: none;">
     <div class="date-picker">
         <span id="date"></span>
         <i class="fa-solid fa-calendar-days" onclick="showDatePicker()"></i>
@@ -120,7 +139,7 @@
 </div>
 
 <!-- Gumb za dodajanje zapisa -->
-<div class="add-button" onclick="openModal()">
+<div class="add-button" onclick="openModal()" style="display: none;">
     <i class="fa-solid fa-book"></i>
 </div>
 
@@ -131,16 +150,42 @@
         <h2 id="modal-date"></h2>
         <p id="modal-time"></p>
         <div class="mood-buttons">
-            <button id="mood-sad" onclick="setMood('😢')">😢</button>
-            <button id="mood-neutral" onclick="setMood('😐')">😐</button>
-            <button id="mood-happy" onclick="setMood('😊')">😊</button>
+            <button onclick="setMood('😢', this)">😢</button>
+            <button onclick="setMood('😐', this)">😐</button>
+            <button onclick="setMood('😊', this)">😊</button>
         </div>
         <textarea id="entry-text" placeholder="Vpiši svoj zapis..."></textarea>
         <button onclick="saveEntry()">Shrani</button>
     </div>
 </div>
 
+<!-- Ikona za odjavo -->
+<div class="logout-button" onclick="logout()">
+    <i class="fa-solid fa-right-from-bracket"></i>
+</div>
+
 <script>
+    const correctPassword = "geslo";
+    let selectedMood = '😐'; // Default mood
+
+    function login() {
+        const passwordInput = document.getElementById("password").value;
+        if (passwordInput === correctPassword) {
+            document.getElementById("login-page").style.display = "none";
+            document.getElementById("main-page").style.display = "block";
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        } else {
+            alert("Napačno geslo");
+        }
+    }
+
+    function logout() {
+        localStorage.clear();
+        document.getElementById("login-page").style.display = "block";
+        document.getElementById("main-page").style.display = "none";
+    }
+
     function formatDate(date) {
         const dnevi = ["Nedelja", "Ponedeljek", "Torek", "Sreda", "Četrtek", "Petek", "Sobota"];
         const meseci = ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december"];
@@ -159,14 +204,13 @@
         input.style.position = "absolute";
         input.style.opacity = 0;
         input.addEventListener("change", function() {
-            if (this.value) {
-                const selectedDate = new Date(this.value);
-                document.getElementById("date").innerText = formatDate(selectedDate);
-            }
+            const selectedDate = new Date(this.value);
+            document.getElementById("date").innerText = formatDate(selectedDate);
+            renderEntries(selectedDate);
         });
         document.body.appendChild(input);
         input.click();
-        setTimeout(() => document.body.removeChild(input), 100);
+        document.body.removeChild(input);
     }
 
     function openModal() {
@@ -179,35 +223,58 @@
         document.getElementById("entry-modal").style.display = "none";
     }
 
-    function setMood(mood) {
-        const buttons = document.querySelectorAll(".mood-buttons button");
+    function setMood(mood, button) {
+        selectedMood = mood;
+        const buttons = document.querySelectorAll('.mood-buttons button');
         buttons.forEach(btn => {
-            if (btn.innerText === mood) {
-                btn.style.color = "black";
-            } else {
-                btn.style.color = "gray";
-            }
+            btn.classList.remove('selected');
+            btn.style.fontSize = '1.5em'; // Reset size
+            btn.style.color = 'gray'; // Reset color
         });
-        document.getElementById("entry-text").dataset.mood = mood;
+        button.classList.add('selected');
+        button.style.fontSize = '2em'; // Enlarge selected emoji
+        button.style.color = '#007bff'; // Highlight selected emoji
     }
 
     function saveEntry() {
+        const date = document.getElementById("date").innerText;
+        const time = document.getElementById("time").innerText;
         const text = document.getElementById("entry-text").value;
-        const mood = document.getElementById("entry-text").dataset.mood || "😐";
         if (text.trim() === "") return;
 
-        const entry = document.createElement("div");
-        entry.className = "entry";
-        entry.innerHTML = `<strong>${mood}</strong> ${text}`;
-        entry.onclick = function() { alert(`Vnos: ${text}\nPočutje: ${mood}`); };
-        document.getElementById("entries").appendChild(entry);
+        const entry = {
+            date: date,
+            time: time,
+            text: text,
+            mood: selectedMood
+        };
 
+        let entries = JSON.parse(localStorage.getItem("entries")) || [];
+        entries.push(entry);
+        localStorage.setItem("entries", JSON.stringify(entries));
+
+        renderEntries(new Date());
         closeModal();
         document.getElementById("entry-text").value = "";
     }
 
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
+    function renderEntries(date = new Date()) {
+        const entries = JSON.parse(localStorage.getItem("entries")) || [];
+        const entriesContainer = document.getElementById("entries");
+        entriesContainer.innerHTML = '';
+
+        const selectedDateStr = formatDate(date);
+        entries.filter(entry => entry.date === selectedDateStr).forEach(entry => {
+            const entryElement = document.createElement("div");
+            entryElement.className = "entry";
+            entryElement.innerHTML = `<strong>${entry.mood}</strong> ${entry.text}`;
+            entryElement.onclick = function() {
+                alert(`Vnos: ${entry.text}\nPočutje: ${entry.mood}`);
+            };
+            entriesContainer.appendChild(entryElement);
+        });
+    }
+
 </script>
 
 </body>
