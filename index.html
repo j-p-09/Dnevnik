@@ -1,281 +1,766 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="sl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dnevnik</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f4;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 90%;
-            max-width: 500px;
-        }
-        .date-picker {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5em;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .date-picker i {
-            margin-left: 10px;
-            color: #007bff;
-            cursor: pointer;
-        }
-        #time {
-            font-size: 1.2em;
-            color: gray;
-        }
-        .entries {
-            margin-top: 20px;
-            text-align: left;
-        }
-        .entry {
-            background: #e3f2fd;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 5px;
-            cursor: pointer;
-        }
-        .add-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            font-size: 2em;
-            background: white;
-            border-radius: 50%;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-        }
-        .mood-buttons button {
-            font-size: 1.5em;
-            margin: 5px;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            transition: 0.3s;
-        }
-        .mood-buttons button.selected {
-            color: #007bff;
-        }
-        .close {
-            float: right;
-            cursor: pointer;
-            font-size: 1.5em;
-            color: red;
-        }
-        #entry-text {
-            width: 100%;
-            height: 100px;
-            margin-top: 10px;
-        }
-        .logout-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            font-size: 2em;
-            background: white;
-            border-radius: 50%;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Elektronski dnevnik</title>
+  <style>
+    :root{
+      --bg:#f4f6fb;
+      --card:#ffffff;
+      --accent:#4b6ef6;
+      --muted:#7b8190;
+      --shadow: 0 6px 18px rgba(43,54,82,0.08);
+      --glass: rgba(255,255,255,0.7);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      background: linear-gradient(180deg,#eef2ff 0%,var(--bg) 100%);
+      color:#0f1724;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Layout */
+    .app {
+      max-width:980px;
+      margin:28px auto;
+      background:var(--card);
+      border-radius:14px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex;
+      min-height:640px;
+    }
+
+    /* Left visual / login block */
+    .left {
+      width:340px;
+      background: linear-gradient(180deg,#3670f0 0%, #2e4ed8 100%);
+      color:white;
+      padding:28px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:0.6px;
+    }
+    .intro{
+      font-size:14px;
+      opacity:0.95;
+    }
+    .login-card{
+      margin-top:auto;
+      background: rgba(255,255,255,0.06);
+      padding:14px;
+      border-radius:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    /* Inputs with icons instead of labels */
+    .input-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background: rgba(255,255,255,0.03);
+      padding:10px;
+      border-radius:8px;
+    }
+    .input-row img{
+      width:28px;
+      height:28px;
+      object-fit:contain;
+      opacity:0.95;
+    }
+    .input-row input{
+      border:0;
+      outline:none;
+      background:transparent;
+      color:white;
+      font-size:15px;
+      flex:1;
+    }
+    .btn{
+      background:var(--accent);
+      color:white;
+      border:0;
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      box-shadow: 0 6px 14px rgba(75,110,246,0.18);
+    }
+    .btn.secondary{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.14);
+      font-weight:600;
+    }
+    .muted{
+      color:rgba(255,255,255,0.85);
+      font-size:13px;
+    }
+
+    /* Right area: navbar + content */
+    .right{
+      flex:1;
+      padding:18px 22px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      position:relative;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    /* Menu icon top-left */
+    .menu-btn{
+      width:44px;
+      height:44px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      border: 1px solid rgba(15,23,36,0.06);
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.82));
+    }
+    .menu-btn .bar{
+      width:18px;
+      height:2px;
+      background:#333;
+      border-radius:2px;
+      position:relative;
+    }
+    .menu-btn .bar:before, .menu-btn .bar:after{
+      content:"";
+      position:absolute;
+      left:0;
+      width:18px;
+      height:2px;
+      background:#333;
+      border-radius:2px;
+    }
+    .menu-btn .bar:before{ top:-6px;}
+    .menu-btn .bar:after{ top:6px;}
+
+    .welcome{
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:0.4px;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    /* Slide-out left menu (icons) */
+    .side-menu {
+      position:absolute;
+      left:14px;
+      top:68px;
+      width:72px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.9));
+      border-radius:10px;
+      box-shadow: 0 10px 30px rgba(15,23,36,0.08);
+      padding:10px;
+      display:none;
+      flex-direction:column;
+      gap:10px;
+      z-index:50;
+    }
+    .side-menu.visible{ display:flex; }
+    .menu-item{
+      width:52px;
+      height:52px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      border:1px solid rgba(15,23,36,0.05);
+      background:transparent;
+    }
+    .menu-item img{ width:36px; height:36px; object-fit:contain; }
+
+    /* Content Card */
+    .card{
+      background:var(--card);
+      border-radius:12px;
+      padding:16px;
+      box-shadow:var(--shadow);
+    }
+    .date-row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    input[type="date"]{
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid rgba(15,23,36,0.06);
+      background:#fff;
+    }
+
+    /* Feeling icons row */
+    .feel-row{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      margin:12px 0;
+    }
+    .feel {
+      width:64px;
+      height:64px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      border:1px solid rgba(15,23,36,0.04);
+      background:transparent;
+    }
+    .feel img{ width:48px; height:48px; object-fit:contain; }
+
+    /* Notes area */
+    textarea{
+      width:100%;
+      min-height:160px;
+      resize:vertical;
+      border-radius:10px;
+      padding:12px;
+      border:1px solid rgba(15,23,36,0.06);
+      font-size:15px;
+      font-family:inherit;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      margin-top:10px;
+    }
+
+    /* Počutje analysis page */
+    .analysis{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      margin-top:10px;
+    }
+    .stat{
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      padding:12px;
+      border-radius:10px;
+      box-shadow:var(--shadow);
+      flex:1;
+      min-width:130px;
+    }
+    .small-muted{ color:var(--muted); font-size:13px; }
+
+    /* Hidden screens */
+    .hidden{ display:none; }
+
+    footer { font-size:12px; color:var(--muted); text-align:center; margin-top:8px; }
+  </style>
 </head>
 <body>
+  <div class="app" id="app">
 
-<!-- Stran za prijavo -->
-<div id="login-page" class="container">
-    <h2>Prijava</h2>
-    <input type="password" id="password" placeholder="Vnesi geslo" />
-    <button onclick="login()">Prijavi se</button>
-</div>
-
-<!-- Glavna stran po prijavi -->
-<div id="main-page" class="container" style="display: none;">
-    <div class="date-picker">
-        <span id="date"></span>
-        <i class="fa-solid fa-calendar-days" onclick="showDatePicker()"></i>
-    </div>
-    <div id="time"></div>
-    <div class="entries" id="entries"></div>
-</div>
-
-<!-- Gumb za dodajanje zapisa -->
-<div class="add-button" onclick="openModal()" style="display: none;">
-    <i class="fa-solid fa-book"></i>
-</div>
-
-<!-- Modal za vnos -->
-<div id="entry-modal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h2 id="modal-date"></h2>
-        <p id="modal-time"></p>
-        <div class="mood-buttons">
-            <button onclick="setMood('😢', this)">😢</button>
-            <button onclick="setMood('😐', this)">😐</button>
-            <button onclick="setMood('😊', this)">😊</button>
+    <!-- LEFT: login panel & brand -->
+    <div class="left" id="leftPanel">
+      <div class="brand">
+        <img src="UPORABNIK.png" alt="logo" style="width:46px;height:46px;border-radius:8px;">
+        <div>
+          <h1>Elektronski dnevnik</h1>
+          <div class="muted">Zapiši svoje počutje in dneve</div>
         </div>
-        <textarea id="entry-text" placeholder="Vpiši svoj zapis..."></textarea>
-        <button onclick="saveEntry()">Shrani</button>
-    </div>
-</div>
+      </div>
 
-<!-- Ikona za odjavo -->
-<div class="logout-button" onclick="logout()">
-    <i class="fa-solid fa-right-from-bracket"></i>
-</div>
+      <div class="intro">
+        Prijavi se z uporabniškim imenom. (testni račun: <strong>jp</strong>)
+      </div>
+
+      <div class="login-card" id="loginCard">
+        <!-- Username row with icon instead of label -->
+        <div class="input-row">
+          <img src="UPORABNIK.png" alt="uporabnik-ikona">
+          <input id="login-username" placeholder="uporabniško ime" autocomplete="username">
+        </div>
+        <!-- Password row with key icon -->
+        <div class="input-row">
+          <img src="KLJUC.png" alt="geslo-ikona">
+          <input id="login-password" type="password" placeholder="geslo" autocomplete="current-password">
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="btnLogin">Prijava</button>
+          <button class="btn secondary" id="btnClear">Počisti</button>
+        </div>
+
+        <div class="muted" id="loginMsg"></div>
+        <div style="margin-top:6px;font-size:12px;color:rgba(255,255,255,0.85)">
+          Če želiš testirati, uporabi: <strong>jp</strong> / <strong>JasaPetrinjak</strong>
+        </div>
+      </div>
+
+      <footer style="margin-top:12px;">Lokalno shranjevanje (localStorage)</footer>
+    </div>
+
+    <!-- RIGHT: main app -->
+    <div class="right" id="mainApp" style="display:none;">
+      <div class="topbar">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="menu-btn" id="menuToggle" title="Meni">
+            <div class="bar"></div>
+          </div>
+
+          <div>
+            <div class="welcome" id="welcomeText">DOBRODŠEL, JAŠA</div>
+            <div class="sub" id="subText">Izberi datum in zapiši svoje počutje.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div id="currentUser" class="small-muted">jp</div>
+        </div>
+
+        <!-- Side menu with icons -->
+        <div class="side-menu" id="sideMenu">
+          <div class="menu-item" id="menuAccount" title="Nastavitve računa">
+            <img src="UPORABNIK.png" alt="nastavitve">
+          </div>
+          <div class="menu-item" id="menuFeeling" title="Počutje">
+            <img src="KULI.png" alt="počutje">
+          </div>
+          <div class="menu-item" id="menuLogout" title="Odjava">
+            <img src="ODJAVA.png" alt="odjava">
+          </div>
+        </div>
+      </div>
+
+      <!-- Main content -->
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-direction:column;">
+        <div class="card" style="width:100%;padding-bottom:18px;">
+          <div class="date-row">
+            <label class="small-muted">Datum:</label>
+            <input type="date" id="entryDate">
+            <div style="margin-left:auto" class="small-muted" id="entryState">— Brez zapisa —</div>
+          </div>
+
+          <!-- Feeling selection -->
+          <div>
+            <div class="small-muted" style="margin-bottom:8px;">Izberi počutje (klikni ikono):</div>
+            <div class="feel-row" id="feelRow">
+              <div class="feel" data-feel="smesko" id="f-smesko">
+                <img src="SMESKO_s.png" alt="smesko" data-small="SMESKO_s.png" data-large="SMESKO.png">
+              </div>
+              <div class="feel" data-feel="resko" id="f-resko">
+                <img src="RESKO_s.png" alt="resko" data-small="RESKO_s.png" data-large="RESKO.png">
+              </div>
+              <div class="feel" data-feel="kisko" id="f-kisko">
+                <img src="KISKO_s.png" alt="kisko" data-small="KISKO_s.png" data-large="KISKO.png">
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div style="margin-top:12px;">
+            <div class="small-muted">Opombe k dnevu:</div>
+            <textarea id="entryNotes" placeholder="Napiši nekaj..."></textarea>
+
+            <div class="actions">
+              <button class="btn secondary" id="btnDelete">Izbriši</button>
+              <button class="btn" id="btnSave">Shrani</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Počutje analysis page -->
+        <div class="card" id="feelingAnalysisCard">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-weight:700">Analiza počutja</div>
+            <div class="small-muted">Hitri pregled na podlagi shranjenih zapisov</div>
+          </div>
+
+          <div class="analysis" id="analysisContent">
+            <div class="stat" id="statCounts">
+              <div class="small-muted">Število zapisov</div>
+              <div style="font-size:28px;font-weight:700;margin-top:6px;" id="totalCount">0</div>
+              <div class="small-muted" style="margin-top:8px;">Razčlenjeno po počutjih</div>
+              <div id="feelCounts" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+            </div>
+
+            <div class="stat" style="flex:2" id="recentListCard">
+              <div class="small-muted">Zadnji zapisi</div>
+              <div id="recentList" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
 <script>
-    const correctPassword = "geslo";
-    let selectedMood = '😐'; // Default mood
+/*
+  Elektronski dnevnik - JS
+  Uporabnik: JAŠA (uporabnisko ime: jp, geslo: JasaPetrinjak)
+  Shramba: localStorage pod ključem 'dnevnik_{username}'
+*/
 
-    function login() {
-        const passwordInput = document.getElementById("password").value;
-        if (passwordInput === correctPassword) {
-            document.getElementById("login-page").style.display = "none";
-            document.getElementById("main-page").style.display = "block";
-            updateDateTime();
-            setInterval(updateDateTime, 1000);
-        } else {
-            alert("Napačno geslo");
-        }
+const TEST_USER = {
+  displayName: "JAŠA",
+  username: "jp",
+  password: "JasaPetrinjak"
+};
+
+// --- UI references
+const loginCard = document.getElementById('loginCard');
+const btnLogin = document.getElementById('btnLogin');
+const btnClear = document.getElementById('btnClear');
+const loginMsg = document.getElementById('loginMsg');
+const inputUser = document.getElementById('login-username');
+const inputPass = document.getElementById('login-password');
+
+const mainApp = document.getElementById('mainApp');
+const welcomeText = document.getElementById('welcomeText');
+const currentUserEl = document.getElementById('currentUser');
+const menuToggle = document.getElementById('menuToggle');
+const sideMenu = document.getElementById('sideMenu');
+const menuAccount = document.getElementById('menuAccount');
+const menuFeeling = document.getElementById('menuFeeling');
+const menuLogout = document.getElementById('menuLogout');
+
+const entryDate = document.getElementById('entryDate');
+const entryState = document.getElementById('entryState');
+const feelRow = document.getElementById('feelRow');
+const notes = document.getElementById('entryNotes');
+const btnSave = document.getElementById('btnSave');
+const btnDelete = document.getElementById('btnDelete');
+
+const totalCountEl = document.getElementById('totalCount');
+const feelCounts = document.getElementById('feelCounts');
+const recentList = document.getElementById('recentList');
+
+let loggedIn = false;
+let activeUser = null;
+let activeDate = null;
+let activeEntry = null; // {date, feel, notes}
+
+// --- Helpers for storage
+function storageKeyForUser(username){
+  return 'dnevnik_' + username;
+}
+function loadAllEntries(username){
+  try {
+    const raw = localStorage.getItem(storageKeyForUser(username));
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){
+    console.error(e);
+    return {};
+  }
+}
+function saveAllEntries(username, data){
+  localStorage.setItem(storageKeyForUser(username), JSON.stringify(data));
+}
+
+// --- Login behavior
+btnLogin.addEventListener('click', tryLogin);
+btnClear.addEventListener('click', () => {
+  inputUser.value = '';
+  inputPass.value = '';
+  loginMsg.textContent = '';
+});
+
+function tryLogin(){
+  const u = (inputUser.value || '').trim();
+  const p = (inputPass.value || '').trim();
+
+  if(u === TEST_USER.username && p === TEST_USER.password){
+    // success
+    loginMsg.textContent = '';
+    afterLogin(TEST_USER);
+  } else {
+    loginMsg.textContent = 'Nepravilno uporabniško ime ali geslo.';
+    loginMsg.style.color = '#ffd1d1';
+  }
+}
+
+function afterLogin(user){
+  loggedIn = true;
+  activeUser = user;
+  // update UI
+  loginCard.style.display = 'none';
+  document.getElementById('leftPanel').querySelector('.intro').textContent = 'Prijavljen kot ' + user.displayName;
+  mainApp.style.display = 'flex';
+  welcomeText.textContent = 'DOBRODŠEL, ' + user.displayName;
+  currentUserEl.textContent = user.username;
+  // set today's date if none
+  const today = new Date().toISOString().slice(0,10);
+  entryDate.value = today;
+  activeDate = entryDate.value;
+  loadEntryForDate(activeDate);
+  refreshAnalysis();
+}
+
+// --- Menu toggle
+menuToggle.addEventListener('click', () => {
+  sideMenu.classList.toggle('visible');
+});
+document.addEventListener('click', (e) => {
+  if(!sideMenu.contains(e.target) && !menuToggle.contains(e.target)){
+    sideMenu.classList.remove('visible');
+  }
+});
+menuAccount.addEventListener('click', () => {
+  alert('Nastavitve računa: \n(Izmišljen demo)\\nUporabnik: ' + (activeUser ? activeUser.displayName : '—'));
+  sideMenu.classList.remove('visible');
+});
+menuFeeling.addEventListener('click', () => {
+  // scroll to analysis card (simple visual)
+  document.getElementById('feelingAnalysisCard').scrollIntoView({behavior:'smooth'});
+  sideMenu.classList.remove('visible');
+});
+menuLogout.addEventListener('click', () => {
+  if(confirm('Res želite odjavo?')){
+    logout();
+  }
+});
+
+// --- Logout
+function logout(){
+  loggedIn = false;
+  activeUser = null;
+  mainApp.style.display = 'none';
+  loginCard.style.display = 'flex';
+  inputUser.value = '';
+  inputPass.value = '';
+  document.getElementById('leftPanel').querySelector('.intro').textContent = 'Prijavi se z uporabniškim imenom. (testni račun: jp)';
+}
+
+// --- Date change
+entryDate.addEventListener('change', (e) => {
+  activeDate = e.target.value;
+  loadEntryForDate(activeDate);
+});
+
+// --- Feeling selection behavior
+// Each .feel has an <img> with data-small and data-large attributes.
+// Behavior: when click on an icon, only that icon shows the large image; others show their small image.
+// Only one can be selected at once.
+function resetFeelIcons(){
+  const icons = feelRow.querySelectorAll('.feel img');
+  icons.forEach(img => {
+    const small = img.dataset.small || img.src;
+    img.src = small;
+    img.parentElement.dataset.selected = 'false';
+  });
+}
+feelRow.addEventListener('click', (e) => {
+  const feelDiv = e.target.closest('.feel');
+  if(!feelDiv) return;
+  const all = feelRow.querySelectorAll('.feel');
+  all.forEach(fd => {
+    const img = fd.querySelector('img');
+    if(fd === feelDiv){
+      img.src = img.dataset.large;
+      fd.dataset.selected = 'true';
+    } else {
+      img.src = img.dataset.small;
+      fd.dataset.selected = 'false';
     }
+  });
+});
 
-    function logout() {
-        localStorage.clear();
-        document.getElementById("login-page").style.display = "block";
-        document.getElementById("main-page").style.display = "none";
+// --- Save & delete
+btnSave.addEventListener('click', () => {
+  if(!activeUser){ alert('Niste prijavljeni.'); return; }
+  if(!activeDate){ alert('Izberi datum.'); return; }
+  const selectedDiv = feelRow.querySelector('.feel[data-selected="true"]');
+  const feel = selectedDiv ? selectedDiv.dataset.feel : null;
+  const text = notes.value.trim();
+  if(!feel && text === ''){
+    if(!confirm('Ni izbranega počutja in ni opombe. Še vedno želite shraniti prazno?')) return;
+  }
+
+  const allEntries = loadAllEntries(activeUser.username);
+  allEntries[activeDate] = {
+    date: activeDate,
+    feel: feel,
+    notes: text,
+    savedAt: new Date().toISOString()
+  };
+  saveAllEntries(activeUser.username, allEntries);
+  entryState.textContent = 'Zapis shranjen';
+  refreshAnalysis();
+  alert('Zapis shranjen.');
+});
+
+btnDelete.addEventListener('click', () => {
+  if(!activeUser || !activeDate) return;
+  const allEntries = loadAllEntries(activeUser.username);
+  if(allEntries[activeDate]){
+    if(!confirm('Izbrišem zapis za ' + activeDate + '?')) return;
+    delete allEntries[activeDate];
+    saveAllEntries(activeUser.username, allEntries);
+    loadEntryForDate(activeDate); // refresh form
+    refreshAnalysis();
+    alert('Zapis izbrisan.');
+  } else {
+    // clear form
+    notes.value = '';
+    resetFeelIcons();
+    entryState.textContent = 'Ni nobenega zapisa za ta datum.';
+  }
+});
+
+// --- Load entry for a date (fill form)
+function loadEntryForDate(date){
+  if(!activeUser) return;
+  const all = loadAllEntries(activeUser.username);
+  const e = all[date];
+  activeEntry = e || null;
+  if(e){
+    // set feeling
+    const allFeel = feelRow.querySelectorAll('.feel');
+    allFeel.forEach(fd => {
+      const img = fd.querySelector('img');
+      if(fd.dataset.feel === e.feel){
+        img.src = img.dataset.large;
+        fd.dataset.selected = 'true';
+      } else {
+        img.src = img.dataset.small;
+        fd.dataset.selected = 'false';
+      }
+    });
+    notes.value = e.notes || '';
+    entryState.textContent = 'Zapis najden. Uredi ali preberi.';
+  } else {
+    // clear
+    resetFeelIcons();
+    notes.value = '';
+    entryState.textContent = 'Za ta datum še ni zapisa.';
+  }
+}
+
+// --- Analysis (counts and recent)
+function refreshAnalysis(){
+  if(!activeUser) return;
+  const all = loadAllEntries(activeUser.username);
+  const keys = Object.keys(all).sort((a,b) => b.localeCompare(a)); // newest first
+  totalCountEl.textContent = keys.length;
+  // counts per feeling
+  const counts = {smesko:0,resko:0,kisko:0,none:0};
+  keys.forEach(k => {
+    const e = all[k];
+    if(!e || !e.feel) counts.none++;
+    else counts[e.feel] = (counts[e.feel]||0) + 1;
+  });
+
+  // render counts with icons
+  feelCounts.innerHTML = '';
+  const makeChip = (label, num, img) => {
+    const d = document.createElement('div');
+    d.style.display='flex';
+    d.style.alignItems='center';
+    d.style.gap='8px';
+    d.style.padding='6px 8px';
+    d.style.border='1px solid rgba(15,23,36,0.04)';
+    d.style.borderRadius='10px';
+    d.style.minWidth='120px';
+    d.innerHTML = '<img src="'+img+'" style="width:28px;height:28px;object-fit:contain"><div style="font-weight:700">'+num+'</div><div style="color:var(--muted);font-size:13px;margin-left:6px">'+label+'</div>';
+    return d;
+  };
+  feelCounts.appendChild(makeChip('Veselo', counts.smesko, 'SMESKO.png'));
+  feelCounts.appendChild(makeChip('Resno', counts.resko, 'RESKO.png'));
+  feelCounts.appendChild(makeChip('Žalostno', counts.kisko, 'KISKO.png'));
+  if(counts.none > 0){
+    feelCounts.appendChild(makeChip('Brez počutja', counts.none, 'UPORABNIK.png'));
+  }
+
+  // recent list (show up to 6 items)
+  recentList.innerHTML = '';
+  if(keys.length === 0){
+    recentList.innerHTML = '<div class="small-muted">Ni še nobenih zapisanih dni.</div>';
+  } else {
+    const max = Math.min(6, keys.length);
+    for(let i=0;i<max;i++){
+      const k = keys[i];
+      const e = all[k];
+      const container = document.createElement('div');
+      container.style.display='flex';
+      container.style.gap='10px';
+      container.style.alignItems='flex-start';
+      container.style.padding='8px 0';
+      container.style.borderBottom = i < max-1 ? '1px dashed rgba(15,23,36,0.04)' : 'none';
+      const img = document.createElement('img');
+      const feelIcon = e && e.feel ? (e.feel === 'smesko' ? 'SMESKO.png' : e.feel === 'resko' ? 'RESKO.png' : 'KISKO.png') : 'UPORABNIK.png';
+      img.src = feelIcon;
+      img.style.width = '42px';
+      img.style.height = '42px';
+      img.style.objectFit='contain';
+      img.style.borderRadius='6px';
+      const txt = document.createElement('div');
+      txt.innerHTML = '<div style="font-weight:700">'+k+'</div><div style="color:var(--muted);font-size:13px;margin-top:4px;">' + (e && e.notes ? (e.notes.length > 120 ? e.notes.slice(0,120)+'…' : e.notes) : '<i>Ni opombe</i>') + '</div>';
+      container.appendChild(img);
+      container.appendChild(txt);
+      // clicking a recent item loads it into the form
+      container.style.cursor = 'pointer';
+      container.addEventListener('click', () => {
+        entryDate.value = k;
+        activeDate = k;
+        loadEntryForDate(k);
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+      recentList.appendChild(container);
     }
+  }
+}
 
-    function formatDate(date) {
-        const dnevi = ["Nedelja", "Ponedeljek", "Torek", "Sreda", "Četrtek", "Petek", "Sobota"];
-        const meseci = ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december"];
-        return `${dnevi[date.getDay()]}, ${date.getDate()}. ${meseci[date.getMonth()]}. ${date.getFullYear()}`;
+// --- Initialize: ensure default images small/large attributes are set (in case)
+(function prepareImages(){
+  const imgs = document.querySelectorAll('.feel img');
+  imgs.forEach(img => {
+    if(!img.dataset.small){
+      // if dataset not present, set based on filename
+      const src = img.src;
+      // try to find suffix _s in filename
+      if(src.includes('_s')){
+        img.dataset.small = src.split('/').pop();
+        img.dataset.large = src.replace('_s','').split('/').pop();
+      } else {
+        // fallback: use provided attributes in HTML already
+      }
     }
+  });
+})();
 
-    function updateDateTime() {
-        const now = new Date();
-        document.getElementById("date").innerText = formatDate(now);
-        document.getElementById("time").innerText = now.toLocaleTimeString();
-    }
+// On page load, set date to today in login left panel? Already in afterLogin
+// Also allow pressing Enter to login
+[inputUser,inputPass].forEach(inp => {
+  inp.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') tryLogin();
+  });
+});
 
-    function showDatePicker() {
-        const input = document.createElement("input");
-        input.type = "date";
-        input.style.position = "absolute";
-        input.style.opacity = 0;
-        input.addEventListener("change", function() {
-            const selectedDate = new Date(this.value);
-            document.getElementById("date").innerText = formatDate(selectedDate);
-            renderEntries(selectedDate);
-        });
-        document.body.appendChild(input);
-        input.click();
-        document.body.removeChild(input);
-    }
-
-    function openModal() {
-        document.getElementById("entry-modal").style.display = "flex";
-        document.getElementById("modal-date").innerText = document.getElementById("date").innerText;
-        document.getElementById("modal-time").innerText = document.getElementById("time").innerText;
-    }
-
-    function closeModal() {
-        document.getElementById("entry-modal").style.display = "none";
-    }
-
-    function setMood(mood, button) {
-        selectedMood = mood;
-        const buttons = document.querySelectorAll('.mood-buttons button');
-        buttons.forEach(btn => {
-            btn.classList.remove('selected');
-            btn.style.fontSize = '1.5em'; // Reset size
-            btn.style.color = 'gray'; // Reset color
-        });
-        button.classList.add('selected');
-        button.style.fontSize = '2em'; // Enlarge selected emoji
-        button.style.color = '#007bff'; // Highlight selected emoji
-    }
-
-    function saveEntry() {
-        const date = document.getElementById("date").innerText;
-        const time = document.getElementById("time").innerText;
-        const text = document.getElementById("entry-text").value;
-        if (text.trim() === "") return;
-
-        const entry = {
-            date: date,
-            time: time,
-            text: text,
-            mood: selectedMood
-        };
-
-        let entries = JSON.parse(localStorage.getItem("entries")) || [];
-        entries.push(entry);
-        localStorage.setItem("entries", JSON.stringify(entries));
-
-        renderEntries(new Date());
-        closeModal();
-        document.getElementById("entry-text").value = "";
-    }
-
-    function renderEntries(date = new Date()) {
-        const entries = JSON.parse(localStorage.getItem("entries")) || [];
-        const entriesContainer = document.getElementById("entries");
-        entriesContainer.innerHTML = '';
-
-        const selectedDateStr = formatDate(date);
-        entries.filter(entry => entry.date === selectedDateStr).forEach(entry => {
-            const entryElement = document.createElement("div");
-            entryElement.className = "entry";
-            entryElement.innerHTML = `<strong>${entry.mood}</strong> ${entry.text}`;
-            entryElement.onclick = function() {
-                alert(`Vnos: ${entry.text}\nPočutje: ${entry.mood}`);
-            };
-            entriesContainer.appendChild(entryElement);
-        });
-    }
-
+// If user inspects localStorage they can see entries. This is by design for demo.
+// End of script
 </script>
-
 </body>
 </html>
